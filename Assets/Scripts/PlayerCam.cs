@@ -3,10 +3,10 @@ using UnityEngine;
 public class PlayerCam : MonoBehaviour
 {
     [Header("Camera")]
-    [SerializeField] private float SensX;       // X민감도
-    [SerializeField] private float SensY;       // Y민감도
-    [SerializeField] private Transform player;  // 플레이어 
-    [SerializeField] private float MaxPitch;    // 최대 숙일수 있는 각
+    [SerializeField] private float SensX;           // X민감도
+    [SerializeField] private float SensY;           // Y민감도
+    [SerializeField] private Transform orientation; // 방향 
+    [SerializeField] private float MaxPitch;        // 최대 숙일수 있는 각
     
     private float xRotation;
     private float yRotation;
@@ -31,7 +31,7 @@ public class PlayerCam : MonoBehaviour
 
         // 오일러 -> 쿼터니언
         transform.rotation = Quaternion.Euler(xRotation, yRotation, 0); // 카메라
-        player.rotation = Quaternion.Euler(0, yRotation, 0);            // 플레이어
+        orientation.rotation = Quaternion.Euler(0, yRotation, 0);       // 방향
 
 
     }
