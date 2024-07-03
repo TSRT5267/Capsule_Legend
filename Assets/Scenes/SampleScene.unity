@@ -221,6 +221,7 @@ GameObject:
   - component: {fileID: 324940508}
   - component: {fileID: 324940507}
   - component: {fileID: 324940509}
+  - component: {fileID: 324940510}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -288,8 +289,7 @@ MonoBehaviour:
   state: 0
   jumpKey: 32
   runKey: 304
-  CrouchKeyHold: 306
-  CrouchKeyToggle: 99
+  CrouchKey: 99
   walkSpeed: 7
   runSpeed: 10
   groundDrag: 5
@@ -304,6 +304,24 @@ MonoBehaviour:
   whatIsGround:
     serializedVersion: 2
     m_Bits: 1024
+--- !u!114 &324940510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 324940506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1661fb7b2192b0f4586c3d802f4cd992, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  orientation: {fileID: 1933685602}
+  playerObj: {fileID: 690946526}
+  slideKey: 306
+  maxSlideTime: 0.75
+  slideForce: 200
+  slideYScale: 0.5
 --- !u!1 &334332770
 GameObject:
   m_ObjectHideFlags: 0
@@ -406,7 +424,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2416806382378720072, guid: b8debc7a53b938f46bfe95cb4a6e338a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2416806382378720072, guid: b8debc7a53b938f46bfe95cb4a6e338a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -868,8 +886,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1dc2dcd636ffff042a5fdd38aded8175, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SensX: 400
-  SensY: 400
+  SensX: 800
+  SensY: 800
   orientation: {fileID: 1933685602}
   MaxPitch: 90
 --- !u!1 &1260721905
@@ -1076,7 +1094,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7158458196331497406, guid: 73fea794eead0ad47bb4be4afd94b827, type: 3}
       propertyPath: m_LocalScale.x
-      value: 3
+      value: 11.184918
       objectReference: {fileID: 0}
     - target: {fileID: 7158458196331497406, guid: 73fea794eead0ad47bb4be4afd94b827, type: 3}
       propertyPath: m_LocalScale.z
@@ -1246,7 +1264,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2416806382378720072, guid: b8debc7a53b938f46bfe95cb4a6e338a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2416806382378720072, guid: b8debc7a53b938f46bfe95cb4a6e338a, type: 3}
       propertyPath: m_LocalPosition.y

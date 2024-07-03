@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Collections;
 using UnityEngine;
 
 public class MovePlayer : MonoBehaviour
@@ -6,18 +7,21 @@ public class MovePlayer : MonoBehaviour
     [Header("Player")]  // 플레이어
     [SerializeField] private State state;   // 상태
 
-    [Header("KeyBinds")] // 키설정
+    [Header("Input")] // 키설정
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;               // 점프키 할당
     [SerializeField] private KeyCode runKey = KeyCode.LeftShift;            // 달리기키 할당
-    [SerializeField] private KeyCode CrouchKeyHold = KeyCode.LeftControl;   // 움크리기키 홀드 할당
-    [SerializeField] private KeyCode CrouchKeyToggle = KeyCode.C;           // 움크리기키 토글 할당
+    [SerializeField] private KeyCode CrouchKey = KeyCode.LeftControl;   // 움크리기키 할당
+    private float horizontalInput;
+    private float verticalInput;
 
     [Header("Move")] // 이동
     [SerializeField] private float walkSpeed;           // 걷기속도
-    [SerializeField] private float runSpeed;            // 뛰기속도
+    [SerializeField] private float runSpeed;            // 뛰기속도    
     [SerializeField] private float groundDrag;          // 바닥 저항
+    [SerializeField] private float speedIncreaseMultiplier;// 속도 증가 배수
     [SerializeField] private Transform orientation;     // 회전값을 받아올 대상
     private float moveSpeed;           // 이동속도
+   
 
     [Header("Jump")] // 점프
     [SerializeField] private float jumpForce;           // 점프력
@@ -29,21 +33,25 @@ public class MovePlayer : MonoBehaviour
     [SerializeField] private float crouchSpeed;         // 움크린 상태에서 속도 
     [SerializeField] private float crouchYScale;        // 움크린 상태에서 키
     private float startYScale;
-    private bool isCrouch = false;
 
-    [Header("Slope Handle")] // 경사면 조절
+    [Header("Slope")] // 경사면 이동
     [SerializeField] private float maxslopeAngle;       // 최대 경사각도
+    [SerializeField] private float slopeIncreaseMultiplier;// 경사로속도 증가 배수
     private RaycastHit slopeHit;                        // 경사로 레이캐스팅
     private bool exitingSlope;                          // 경사로 탈출
+
+    [Header("Slide")]
+    [SerializeField] private float slideSpeed;            // 슬라이드속도
+    private float desiredMoveSpeed;
+    private float lastDesiredMoveSpeed;
+    public bool isSlide;
 
     [Header("Ground Check")] // 바닥 확인
     [SerializeField] private float playerHeight;        // 바닥인지 판단할 높이
     [SerializeField] private LayerMask whatIsGround;    // 바닥 레이어
     private bool isGround;
 
-
-    private float horicaontalInput;
-    private float verticalInput;
+    
 
     private Vector3 moveDir;
 
@@ -56,6 +64,7 @@ public class MovePlayer : MonoBehaviour
         RUN,
         AIR,
         CROUCH,
+        SLIDE,
     }
 
 
@@ -66,6 +75,8 @@ public class MovePlayer : MonoBehaviour
         rb.freezeRotation = true;       // 물리로 인해 회전되지 않게 
 
         startYScale = transform.localScale.y;
+
+       
     }
 
     private void FixedUpdate()
@@ -87,6 +98,7 @@ public class MovePlayer : MonoBehaviour
             rb.linearDamping = groundDrag;
         else
             rb.linearDamping = 0;
+
     }
 
     
@@ -94,31 +106,83 @@ public class MovePlayer : MonoBehaviour
 //--------------------------------------------------------------------------------------------
     private void StateHandler() // 상태 변경
     {
-        if(isCrouch)                            // 움크리기
+        if(isSlide) // 슬라이드
+        {
+            state = State.SLIDE;
+
+            if (OnSlope() && rb.linearVelocity.y < 0.1f) 
+                desiredMoveSpeed = slideSpeed;
+            else 
+                desiredMoveSpeed = runSpeed;
+        }
+        else if(Input.GetKey(CrouchKey)) // 움크리기
         {
             state = State.CROUCH;
-            moveSpeed = crouchSpeed;
+            desiredMoveSpeed = crouchSpeed;
         }
         else if(isGround && Input.GetKey(runKey))    // 달리기
         {
             state = State.RUN;
-            moveSpeed = runSpeed;          
+            desiredMoveSpeed = runSpeed;          
         }
         else if(isGround)                       // 걷기
         {
             state = State.WALK;
-            moveSpeed = walkSpeed;
+            desiredMoveSpeed = walkSpeed;
         }
         else                                    // 공중
         {
             state = State.AIR;
         }
-       
+
+        // 변화해야할 속도가 4이상인 경우 부르럽게 속도 변경
+        if (Mathf.Abs(desiredMoveSpeed - lastDesiredMoveSpeed) > 4f && moveSpeed != 0)
+        {
+            StopAllCoroutines();
+            StartCoroutine(SmoothlyLerpMoveSpeed());
+
+            
+        }
+        else // 일반적인 달리기 같은 경우는 즉각적인 속도 변경
+        {
+            moveSpeed = desiredMoveSpeed;
+        }
+
+        lastDesiredMoveSpeed = desiredMoveSpeed;
+
+        
+    }
+
+    private IEnumerator SmoothlyLerpMoveSpeed() // moveSpeed를 desiredMoveSpeed 부드럽게 변경
+    {
+        float time = 0;
+        float difference = Mathf.Abs(desiredMoveSpeed - moveSpeed);
+        float startValue = moveSpeed;
+
+        while (time < difference)
+        {
+            moveSpeed = Mathf.Lerp(startValue, desiredMoveSpeed, time / difference);
+            
+            if(OnSlope())
+            {
+                float slopeAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
+                float slopeAngleIncrease = 1 + (slopeAngle / 90f);
+
+                time += Time.deltaTime * speedIncreaseMultiplier * slopeIncreaseMultiplier * slopeAngleIncrease;
+            }
+            else
+            {
+                time += Time.deltaTime * speedIncreaseMultiplier;
+            }          
+            
+            yield return null;
+        }
+        moveSpeed = desiredMoveSpeed;
     }
    
     private void MyInput() // 플레이어 입력
     {
-        horicaontalInput = Input.GetAxisRaw("Horizontal");  // 수평이동값 
+        horizontalInput = Input.GetAxisRaw("Horizontal");  // 수평이동값 
         verticalInput = Input.GetAxisRaw("Vertical");       // 수직이동값
         
         // 준비가 되어있고 바닥일시 점프가능
@@ -130,9 +194,16 @@ public class MovePlayer : MonoBehaviour
             Invoke(nameof(ResetJump), jumpCoolDown); // 점프 재사용대기시간       
         }
 
-        
+        // 움크리기 시작
+        if(Input.GetKeyDown(CrouchKey))
+        {
+            transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z); //슬라이드시 Y스케일 축소
+            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+        }
+        // 움크리기 중단
+        if(Input.GetKeyUp(CrouchKey))
+            transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z); //슬라이드시 Y스케일 복구
 
-        Crouch();
 
         /* // 탭 스프레이핑  보류
          if(Input.GetAxis("Mouse ScrollWheel") > 0f && !isGround)
@@ -146,12 +217,12 @@ public class MovePlayer : MonoBehaviour
     private void Move() // 이동
     {
         // 이동 방향 계산
-        moveDir = orientation.forward * verticalInput + orientation.right * horicaontalInput;
+        moveDir = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
         // 경사면
         if (OnSlope() && !exitingSlope)
         {                
-            rb.AddForce(GetSlopeMoveDir() * moveSpeed * 20f, ForceMode.Force); // 경사면에 맞는 방향으로 이동   
+            rb.AddForce(GetSlopeMoveDir(moveDir) * moveSpeed * 20f, ForceMode.Force); // 경사면에 맞는 방향으로 이동   
 
             if (rb.linearVelocity.y > 0) // 위로 튕기는현상
                 rb.AddForce(Vector3.down*80f, ForceMode.Force); // 아래로 힘을부여 
@@ -166,7 +237,17 @@ public class MovePlayer : MonoBehaviour
         else if (!isGround)
             rb.AddForce(moveDir.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force); // 공중 제어력 추가
 
+       
+
         rb.useGravity = !OnSlope();
+
+
+        if (rb.linearVelocity.magnitude <= 1f && moveSpeed >= 10f)
+        {
+            //Debug.Log("hi");
+            StopAllCoroutines();
+            moveSpeed = 7.0f;
+        }
     }
 
     private void SpeedControl() // 최고속도 고정
@@ -200,42 +281,7 @@ public class MovePlayer : MonoBehaviour
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);   //Inpulse모드로 한번에 힘적용
         
-    }
-
-    private void Crouch() // 움크리기
-    {
-        // 움크리기 토글
-        if (Input.GetKeyDown(CrouchKeyToggle))
-        {
-            isCrouch = !isCrouch;
-            if (isCrouch)
-            {
-                // Y크기 축소
-                transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
-                rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);  // 줄어든 크기만큼 아래로 이동
-            }
-            else
-            {
-                // Y크기 복구
-                transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
-            }
-        }
-
-        // 움크리기 홀드
-        if (Input.GetKeyDown(CrouchKeyHold))
-        {
-            isCrouch = true;
-            // 홀드가 눌려있을 때는 토글 상태를 무시하고 크기 축소
-            transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
-            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);  // 줄어든 크기만큼 아래로 이동
-        }
-        else if (Input.GetKeyUp(CrouchKeyHold))  // 토글 상태가 아니면 크기 복구
-        {
-            isCrouch = false;
-            // Y크기 복구
-            transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
-        }
-    }
+    }  
 
     private void ResetJump()    // 점프 조기화
     {
@@ -243,7 +289,7 @@ public class MovePlayer : MonoBehaviour
         exitingSlope = false;
     }
 
-    private bool OnSlope()  // 오를수 있는 경사면 판정
+    public bool OnSlope()  // 오를수 있는 경사면 판정
     {
         if(Physics.Raycast(transform.position,Vector3.down,out slopeHit,playerHeight * 0.5f + 0.3f))
         {
@@ -254,10 +300,10 @@ public class MovePlayer : MonoBehaviour
         return false;
     }
 
-    private Vector3 GetSlopeMoveDir() // 경사면에서 방향
+    public Vector3 GetSlopeMoveDir(Vector3 dir) // 경사면에서 방향
     {
         // 경사면 기울기 만큼 바닥면을 변경
-        return Vector3.ProjectOnPlane(moveDir, slopeHit.normal).normalized;
+        return Vector3.ProjectOnPlane(dir, slopeHit.normal).normalized;
     }
 
     //------------------getter , setter----------------------------
@@ -266,5 +312,7 @@ public class MovePlayer : MonoBehaviour
     {
         get { return state; }
     }
+
+    
     
 }

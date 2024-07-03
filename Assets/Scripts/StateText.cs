@@ -14,11 +14,6 @@ public class StateText : MonoBehaviour
 
     void Update()
     {
-        if(player.GetComponent<MovePlayer>().States == MovePlayer.State.WALK)
-            text.text = "State : Walk";
-        else if(player.GetComponent<MovePlayer>().States == MovePlayer.State.AIR)
-            text.text = "State : Air";
-        else if (player.GetComponent<MovePlayer>().States == MovePlayer.State.RUN)
-            text.text = "State : Run";
+        text.text = "State : " + player.GetComponent<MovePlayer>().States;
     }
 }
