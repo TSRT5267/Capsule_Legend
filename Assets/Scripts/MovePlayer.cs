@@ -244,7 +244,6 @@ public class MovePlayer : MonoBehaviour
 
         if (rb.linearVelocity.magnitude <= 1f && moveSpeed >= 10f)
         {
-            //Debug.Log("hi");
             StopAllCoroutines();
             moveSpeed = 7.0f;
         }
