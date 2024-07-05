@@ -14,15 +14,16 @@ public class MovePlayer : MonoBehaviour
     private float horizontalInput;
     private float verticalInput;
 
-    [Header("Move")] // 이동
+    [Header("Movement")] // 이동
     [SerializeField] private float walkSpeed;           // 걷기속도
-    [SerializeField] private float runSpeed;            // 뛰기속도    
+    [SerializeField] private float runSpeed;            // 뛰기속도
+    [SerializeField] private float slideSpeed;          // 슬라이드속도                                                    // 
+    [SerializeField] private float wallRunSpeed;        // 벽타기 속도                                                    // 
     [SerializeField] private float groundDrag;          // 바닥 저항
     [SerializeField] private float speedIncreaseMultiplier;// 속도 증가 배수
     [SerializeField] private Transform orientation;     // 회전값을 받아올 대상
     private float moveSpeed;           // 이동속도
    
-
     [Header("Jump")] // 점프
     [SerializeField] private float jumpForce;           // 점프력
     [SerializeField] private float jumpCoolDown;        // 점프 재사용대기시간
@@ -40,24 +41,23 @@ public class MovePlayer : MonoBehaviour
     private RaycastHit slopeHit;                        // 경사로 레이캐스팅
     private bool exitingSlope;                          // 경사로 탈출
 
-    [Header("Slide")]
-    [SerializeField] private float slideSpeed;            // 슬라이드속도
+    [Header("Slide")]    
     private float desiredMoveSpeed;
     private float lastDesiredMoveSpeed;
-    public bool isSlide;
-
+    
     [Header("Ground Check")] // 바닥 확인
     [SerializeField] private float playerHeight;        // 바닥인지 판단할 높이
     [SerializeField] private LayerMask whatIsGround;    // 바닥 레이어
-    private bool isGround;
-
     
+    [Header("State")]
+    [SerializeField] private bool isGround;
+    [SerializeField] private bool isCrounch;
+    public bool isSlide;
+    public bool isWallRun;
 
     private Vector3 moveDir;
-
     private Rigidbody rb;
     
-
     public enum State
     {
         WALK,
@@ -65,9 +65,8 @@ public class MovePlayer : MonoBehaviour
         AIR,
         CROUCH,
         SLIDE,
+        WALLRUN,
     }
-
-
 
     private void Start()
     {
@@ -106,7 +105,12 @@ public class MovePlayer : MonoBehaviour
 //--------------------------------------------------------------------------------------------
     private void StateHandler() // 상태 변경
     {
-        if(isSlide) // 슬라이드
+        if(isWallRun) // 벽타기
+        {
+            state = State.WALLRUN;
+            desiredMoveSpeed = wallRunSpeed;
+        }
+        else if(isSlide) // 슬라이드
         {
             state = State.SLIDE;
 
@@ -150,7 +154,10 @@ public class MovePlayer : MonoBehaviour
 
         lastDesiredMoveSpeed = desiredMoveSpeed;
 
-        
+
+        if (state == State.CROUCH) isCrounch = true;
+        else isCrounch = false;
+
     }
 
     private IEnumerator SmoothlyLerpMoveSpeed() // moveSpeed를 desiredMoveSpeed 부드럽게 변경
