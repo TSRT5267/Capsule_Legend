@@ -17,8 +17,8 @@ public class MovePlayer : MonoBehaviour
     [Header("Movement")] // 이동
     [SerializeField] private float walkSpeed;           // 걷기속도
     [SerializeField] private float runSpeed;            // 뛰기속도
-    [SerializeField] private float slideSpeed;          // 슬라이드속도                                                    // 
-    [SerializeField] private float wallRunSpeed;        // 벽타기 속도                                                    // 
+    [SerializeField] private float slideSpeed;          // 슬라이드속도                                                    
+    [SerializeField] private float wallRunSpeed;        // 벽타기 속도                                                    
     [SerializeField] private float groundDrag;          // 바닥 저항
     [SerializeField] private float speedIncreaseMultiplier;// 속도 증가 배수
     [SerializeField] private Transform orientation;     // 회전값을 받아올 대상

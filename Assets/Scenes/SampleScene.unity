@@ -2961,11 +2961,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   wallRunForce: 200
-  wallRunTime: 1.5
-  horizontalInput: 0
-  verticalInput: 0
+  wallJumpUpForce: 7
+  wallJumpSideForce: 12
+  wallClimbSpeed: 3
+  wallRunTime: 0.7
+  wallJumpKey: 32
+  upwardsRunKey: 113
+  downwardsRunKey: 101
   wallCheckDis: 0.7
   minJumpHeight: 2
+  exitWallTime: 0.2
   orientation: {fileID: 1933685602}
 --- !u!1001 &334556058
 PrefabInstance:
@@ -11120,7 +11125,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -200, y: -100}
-  m_SizeDelta: {x: 300, y: 100}
+  m_SizeDelta: {x: 400, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1243749406
 MonoBehaviour:

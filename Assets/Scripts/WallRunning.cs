@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class WallRunning : MonoBehaviour
@@ -7,12 +8,21 @@ public class WallRunning : MonoBehaviour
     [SerializeField] private LayerMask whatIsGround;    // 바닥 레이어 
     [SerializeField] private LayerMask whatIsWall;      // 벽 레이어
     [SerializeField] private float wallRunForce;        // 벽타기 힘
+    [SerializeField] private float wallJumpUpForce;     // 벽점프 위쪽 힘
+    [SerializeField] private float wallJumpSideForce;   // 벽타기 측면 힘
+    [SerializeField] private float wallClimbSpeed;      // 벽타기중 상하이동 속도
     [SerializeField] private float wallRunTime;         // 벽타기 시간
     private float wallRunTimer;                         // 타이머
+    private bool readyToWallRun = true;
 
     [Header("Input")]
-    [SerializeField] private float horizontalInput;
-    [SerializeField] private float verticalInput;
+    [SerializeField] private KeyCode wallJumpKey = KeyCode.Space;       // 벽점프 키 
+    [SerializeField] private KeyCode upwardsRunKey = KeyCode.Q;      // 벽타기중 위방향 이동 키 
+    [SerializeField] private KeyCode downwardsRunKey = KeyCode.E;    // 벽타기중 아래방향 이동 키
+    private bool isUpwardsRun;
+    private bool isDownwardsRun;
+    private float horizontalInput;
+    private float verticalInput;
 
     [Header("Detection")] //벽감지 
     [SerializeField] private float wallCheckDis;        // 벽 검사 거리
@@ -21,6 +31,11 @@ public class WallRunning : MonoBehaviour
     private RaycastHit rightWallHit;                    // 오른벽 레이케스트 
     private bool isLeftWall;
     private bool isRightWall;
+
+    [Header("Exiting")]
+    [SerializeField] private float exitWallTime;
+    private float exitWallTimer;
+    private bool exitingWall;
 
     [Header("Player")]
     [SerializeField] private Transform orientation;     
@@ -65,12 +80,31 @@ public class WallRunning : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
+        // 상하이동 입력
+        isUpwardsRun = Input.GetKey(upwardsRunKey);
+        isDownwardsRun = Input.GetKey(downwardsRunKey);
+
         // 벽타기
-        if((isLeftWall || isRightWall) && verticalInput > 0  && AboveGround())
-        {
+        if((isLeftWall || isRightWall) && verticalInput > 0  && AboveGround() && !exitingWall && readyToWallRun)
+        {         
             if (!pm.isWallRun) StartWallRun();
+
+            if (wallRunTimer > 0) wallRunTimer -= Time.deltaTime;
+            if (wallRunTimer <= 0 && pm.isWallRun)
+            {
+                exitingWall = true;
+                exitWallTimer = exitWallTime;
+            }
+
+            if (Input.GetKeyDown(wallJumpKey)) WallJump(); // 벽점프
         }
-        else
+        else if (exitingWall) // 벽타기가 취소되는 경우(벽점프)
+        {
+            if (pm.isWallRun) StopWallRun();
+            if (exitWallTimer > 0) exitWallTimer -= Time.deltaTime;
+            if (exitWallTimer <= 0) exitingWall = false;
+        }
+        else // 벽타기 끝
         {
             if (pm.isWallRun) StopWallRun();
         }
@@ -78,7 +112,10 @@ public class WallRunning : MonoBehaviour
 
     private void StartWallRun()
     {
+        readyToWallRun = false;
         pm.isWallRun = true;
+
+        wallRunTimer = wallRunTime; // 벽타기 지속시간 초기화
     }
 
     private void WallRunningMovement()  
@@ -88,7 +125,7 @@ public class WallRunning : MonoBehaviour
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
 
-        // 충동하고 있는 벽에 Normal 저장
+        // 충동하고 있는 벽에 법선백터 저장
         Vector3 wallNormal = isRightWall ? rightWallHit.normal : leftWallHit.normal;
 
         // 외적을 통해 전방 방향을 구함
@@ -101,6 +138,10 @@ public class WallRunning : MonoBehaviour
         // 힘 적용
         rb.AddForce(wallForward * wallRunForce,ForceMode.Force);
 
+        // 벽타기 상하이동
+        if (isUpwardsRun) rb.linearVelocity = new Vector3(rb.linearVelocity.x, wallClimbSpeed, rb.linearVelocity.z);
+        if (isDownwardsRun) rb.linearVelocity = new Vector3(rb.linearVelocity.x, -wallClimbSpeed, rb.linearVelocity.z);
+
         // 벽타기 접지력 추가
         if (!(isLeftWall && horizontalInput > 0) && !(isRightWall && horizontalInput < 0))
             rb.AddForce(-wallNormal * 100, ForceMode.Force);
@@ -108,6 +149,23 @@ public class WallRunning : MonoBehaviour
 
     private void StopWallRun()
     {
-        pm.isWallRun=false;
+        pm.isWallRun = false;
+    }
+
+    private void WallJump()
+    {
+        // 벽탈출
+        exitingWall = true;
+        exitWallTimer = exitWallTime;   //탈출시간 초기화
+
+        // 벽에 법선 백터 저장
+        Vector3 wallNormal = isRightWall ? rightWallHit.normal : leftWallHit.normal;
+
+        // 벽점프시 적용될 백터
+        Vector3 forceToApply = transform.up * wallJumpUpForce + wallNormal * wallJumpSideForce;
+
+        // 벽점프
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        rb.AddForce(forceToApply, ForceMode.Impulse);
     }
 }
