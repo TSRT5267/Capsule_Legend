@@ -6,6 +6,8 @@ public class MovePlayer : MonoBehaviour
 {
     [Header("Player")]  // 플레이어
     [SerializeField] private State state;   // 상태
+    [SerializeField] private Climbing climbingScript; 
+
 
     [Header("Input")] // 키설정
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;               // 점프키 할당
@@ -18,7 +20,8 @@ public class MovePlayer : MonoBehaviour
     [SerializeField] private float walkSpeed;           // 걷기속도
     [SerializeField] private float runSpeed;            // 뛰기속도
     [SerializeField] private float slideSpeed;          // 슬라이드속도                                                    
-    [SerializeField] private float wallRunSpeed;        // 벽타기 속도                                                    
+    [SerializeField] private float wallRunSpeed;        // 벽타기 속도
+    [SerializeField] private float climbSpeed;        // 벽오르기 속도                                                
     [SerializeField] private float groundDrag;          // 바닥 저항
     [SerializeField] private float speedIncreaseMultiplier;// 속도 증가 배수
     [SerializeField] private Transform orientation;     // 회전값을 받아올 대상
@@ -54,6 +57,7 @@ public class MovePlayer : MonoBehaviour
     [SerializeField] private bool isCrounch;
     public bool isSlide;
     public bool isWallRun;
+    public bool isClimb;
 
     private Vector3 moveDir;
     private Rigidbody rb;
@@ -66,6 +70,7 @@ public class MovePlayer : MonoBehaviour
         CROUCH,
         SLIDE,
         WALLRUN,
+        CLIMB
     }
 
     private void Start()
@@ -105,7 +110,12 @@ public class MovePlayer : MonoBehaviour
 //--------------------------------------------------------------------------------------------
     private void StateHandler() // 상태 변경
     {
-        if(isWallRun) // 벽타기
+        if(isClimb) // 벽 오르기
+        {
+            state = State.CLIMB;
+            desiredMoveSpeed = climbSpeed;
+        }
+        else if(isWallRun) // 벽타기
         {
             state = State.WALLRUN;
             desiredMoveSpeed = wallRunSpeed;
@@ -223,6 +233,8 @@ public class MovePlayer : MonoBehaviour
 
     private void Move() // 이동
     {
+        if (climbingScript.ExitingWall) return;     //벽오르는 중 벽에서 탈출시 행동정지
+
         // 이동 방향 계산
         moveDir = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
@@ -319,6 +331,9 @@ public class MovePlayer : MonoBehaviour
         get { return state; }
     }
 
-    
+    public bool IsGround
+    {
+        get { return isGround; }
+    }
     
 }

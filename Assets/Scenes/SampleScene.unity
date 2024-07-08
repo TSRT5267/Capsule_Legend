@@ -2834,6 +2834,7 @@ GameObject:
   - component: {fileID: 324940509}
   - component: {fileID: 324940510}
   - component: {fileID: 324940511}
+  - component: {fileID: 324940512}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -2899,13 +2900,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   state: 0
+  climbingScript: {fileID: 324940512}
   jumpKey: 32
   runKey: 304
-  CrouchKey: 99
+  CrouchKey: 0
   walkSpeed: 7
   runSpeed: 10
   slideSpeed: 30
   wallRunSpeed: 8.5
+  climbSpeed: 3
   groundDrag: 4
   speedIncreaseMultiplier: 1.5
   orientation: {fileID: 1933685602}
@@ -2924,6 +2927,7 @@ MonoBehaviour:
   isCrounch: 0
   isSlide: 0
   isWallRun: 0
+  isClimb: 0
 --- !u!114 &324940510
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2938,7 +2942,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   orientation: {fileID: 1933685602}
   playerObj: {fileID: 690946526}
-  slideKey: 306
+  slideKey: 99
   maxSlideTime: 0.75
   slideForce: 200
   slideYScale: 0.5
@@ -2964,14 +2968,44 @@ MonoBehaviour:
   wallJumpUpForce: 7
   wallJumpSideForce: 12
   wallClimbSpeed: 3
-  wallRunTime: 0.7
+  wallRunTime: 0.5
   wallJumpKey: 32
-  upwardsRunKey: 113
-  downwardsRunKey: 101
+  upwardsRunKey: 0
+  downwardsRunKey: 0
   wallCheckDis: 0.7
   minJumpHeight: 2
   exitWallTime: 0.2
   orientation: {fileID: 1933685602}
+--- !u!114 &324940512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 324940506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c840e876787563468747c6e884f9dcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  orientation: {fileID: 1933685602}
+  rb: {fileID: 324940507}
+  whatIsWall:
+    serializedVersion: 2
+    m_Bits: 1024
+  pm: {fileID: 324940509}
+  climbSpeed: 10
+  maxClimbTime: 0.75
+  climbJumpUpForce: 14
+  climbJumpBackForce: 12
+  jumpKey: 32
+  climbJumps: 1
+  exitingWall: 0
+  exitWallTime: 0.2
+  detectionLength: 0.7
+  sphereCastRadius: 0.25
+  maxWallLookAngle: 30
+  minWallNormalAngleChange: 5
 --- !u!1001 &334556058
 PrefabInstance:
   m_ObjectHideFlags: 0

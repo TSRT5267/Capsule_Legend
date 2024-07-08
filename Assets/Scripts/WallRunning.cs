@@ -13,7 +13,7 @@ public class WallRunning : MonoBehaviour
     [SerializeField] private float wallClimbSpeed;      // 벽타기중 상하이동 속도
     [SerializeField] private float wallRunTime;         // 벽타기 시간
     private float wallRunTimer;                         // 타이머
-    private bool readyToWallRun = true;
+    
 
     [Header("Input")]
     [SerializeField] private KeyCode wallJumpKey = KeyCode.Space;       // 벽점프 키 
@@ -85,7 +85,7 @@ public class WallRunning : MonoBehaviour
         isDownwardsRun = Input.GetKey(downwardsRunKey);
 
         // 벽타기
-        if((isLeftWall || isRightWall) && verticalInput > 0  && AboveGround() && !exitingWall && readyToWallRun)
+        if((isLeftWall || isRightWall) && verticalInput > 0  && AboveGround() && !exitingWall  )
         {         
             if (!pm.isWallRun) StartWallRun();
 
@@ -112,7 +112,7 @@ public class WallRunning : MonoBehaviour
 
     private void StartWallRun()
     {
-        readyToWallRun = false;
+        
         pm.isWallRun = true;
 
         wallRunTimer = wallRunTime; // 벽타기 지속시간 초기화
