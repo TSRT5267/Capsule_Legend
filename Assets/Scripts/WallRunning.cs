@@ -37,7 +37,7 @@ public class WallRunning : MonoBehaviour
     private float exitWallTimer;
     private bool exitingWall;
 
-    [Header("Player")]
+    [Header("ReFerences")]
     [SerializeField] private Transform orientation;     
     private MovePlayer pm;             
     private Rigidbody rb;

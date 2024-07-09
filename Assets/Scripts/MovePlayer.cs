@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MovePlayer : MonoBehaviour
 {
-    [Header("Player")]  // 플레이어
+    [Header("ReFerences")]  
     [SerializeField] private State state;   // 상태
     [SerializeField] private Climbing climbingScript; 
 
@@ -58,6 +58,12 @@ public class MovePlayer : MonoBehaviour
     public bool isSlide;
     public bool isWallRun;
     public bool isClimb;
+    public bool isFreeze;
+    public bool isGrapple;
+
+    [Header("Camera Effects")]
+    [SerializeField] private PlayerCam cam;
+    [SerializeField] private float grappleFov = 95f;
 
     private Vector3 moveDir;
     private Rigidbody rb;
@@ -70,8 +76,12 @@ public class MovePlayer : MonoBehaviour
         CROUCH,
         SLIDE,
         WALLRUN,
-        CLIMB
+        CLIMB,
+        FREEZE,
+
     }
+
+    //------------------------------------------------------------------
 
     private void Start()
     {
@@ -98,7 +108,7 @@ public class MovePlayer : MonoBehaviour
         StateHandler();     // 상태 변경
 
         // 바닥 저항
-        if (isGround)
+        if (isGround && !isGrapple)
             rb.linearDamping = groundDrag;
         else
             rb.linearDamping = 0;
@@ -108,9 +118,16 @@ public class MovePlayer : MonoBehaviour
     
 
 //--------------------------------------------------------------------------------------------
+   
     private void StateHandler() // 상태 변경
     {
-        if(isClimb) // 벽 오르기
+        if(isFreeze) // 특수 동작시 선딜
+        {
+            state = State.FREEZE;
+            moveSpeed = 0;
+            rb.linearVelocity = Vector3.zero;
+        }
+        else if(isClimb) // 벽 오르기
         {
             state = State.CLIMB;
             desiredMoveSpeed = climbSpeed;
@@ -233,6 +250,7 @@ public class MovePlayer : MonoBehaviour
 
     private void Move() // 이동
     {
+        if (isGrapple) return;                      //그래플 중 행동정지
         if (climbingScript.ExitingWall) return;     //벽오르는 중 벽에서 탈출시 행동정지
 
         // 이동 방향 계산
@@ -270,6 +288,8 @@ public class MovePlayer : MonoBehaviour
 
     private void SpeedControl() // 최고속도 고정
     {
+        if (isGrapple) return;
+
         if(OnSlope() && !exitingSlope) // 경사로인경우
         {
             if(rb.linearVelocity.magnitude > moveSpeed)
@@ -307,6 +327,44 @@ public class MovePlayer : MonoBehaviour
         exitingSlope = false;
     }
 
+    private bool enableMovementOnNextTouch;
+    public void JumpToPosition(Vector3 targetPosition,float trajectoryHeight)
+    {
+        isGrapple = true;
+
+        velocityToSet = CalculateJumpVelocity(transform.position, targetPosition, trajectoryHeight);
+        Invoke(nameof(SetVelocity), 0.1f);  // 계산은 위해 약간 나중에 실행
+        Invoke(nameof(ResetRestrictions), 3f);  // 그래플에 문제가 생길시 리셋
+        
+    }
+
+    private Vector3 velocityToSet;
+    private void SetVelocity()
+    {
+        enableMovementOnNextTouch = true;
+        rb.linearVelocity = velocityToSet;
+
+        cam.DoFov(grappleFov);
+    }
+
+    public void ResetRestrictions()
+    {
+        isGrapple = false;
+
+        cam.DoFov(85f);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (enableMovementOnNextTouch)
+        {
+            enableMovementOnNextTouch = false;
+            ResetRestrictions();
+
+            GetComponent<Grappling>().StopGrapple();
+        }
+    }
+
     public bool OnSlope()  // 오를수 있는 경사면 판정
     {
         if(Physics.Raycast(transform.position,Vector3.down,out slopeHit,playerHeight * 0.5f + 0.3f))
@@ -322,6 +380,26 @@ public class MovePlayer : MonoBehaviour
     {
         // 경사면 기울기 만큼 바닥면을 변경
         return Vector3.ProjectOnPlane(dir, slopeHit.normal).normalized;
+    }
+
+    // 포물선 점프
+    public Vector3 CalculateJumpVelocity(Vector3 startPoint, Vector3 endPoint, float trajectoryHeight)
+    {
+        float gravity = Physics.gravity.y;                  //중력
+        float displacementY = endPoint.y - startPoint.y;    // 출발점과 도착점의 y차
+        Vector3 displacementXZ = new Vector3(endPoint.x - startPoint.x, 0f, endPoint.z - startPoint.z); // 출발점과 도착점의 평면위치 차
+
+        // velocityY = trajectoryHeight에 도달하기 위한 수직속도 ( v=√-2*g*h )                    
+        // velocityXZ
+        // 앞에있는 Sqrt는 최고점까지 걸리는 시간 계산 ( t=√-2*g-h )                    
+        // 뒤에싰는 Sqrt는 최고점에서 도착점까지 떨어지느 시간 계산 ( t=√2(disY-h)/g )
+        // 이후 거리를 나누어 속도를 구함
+
+        Vector3 velocityY = Vector3.up * Mathf.Sqrt(-2 * gravity * trajectoryHeight);           
+        Vector3 velocityXZ = displacementXZ / (Mathf.Sqrt(-2 * trajectoryHeight / gravity)      
+            + Mathf.Sqrt(2 * (displacementY - trajectoryHeight) / gravity));                    
+                                                                                                
+        return velocityXZ+velocityY;
     }
 
     //------------------getter , setter----------------------------

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Slide : MonoBehaviour
 {
-    [Header("Player")]
+    [Header("ReFerences")]
     [SerializeField] private Transform orientation;     // 회전
     [SerializeField] private Transform playerObj;       // 플레이어 몸체
     private Rigidbody rb;
