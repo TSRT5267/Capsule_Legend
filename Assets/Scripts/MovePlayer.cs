@@ -6,8 +6,8 @@ public class MovePlayer : MonoBehaviour
 {
     [Header("ReFerences")]  
     [SerializeField] private State state;   // 상태
-    [SerializeField] private Climbing climbingScript; 
-
+    [SerializeField] private Climbing climbingScript;
+    public int hp;
 
     [Header("Input")] // 키설정
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;               // 점프키 할당
@@ -90,7 +90,7 @@ public class MovePlayer : MonoBehaviour
 
         startYScale = transform.localScale.y;
 
-       
+        hp = 100;
     }
 
     private void FixedUpdate()

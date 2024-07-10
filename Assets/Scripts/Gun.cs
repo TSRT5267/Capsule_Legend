@@ -16,6 +16,7 @@ public class Gun : MonoBehaviour
 
     [Header("Fire")]
     [SerializeField] private KeyCode fireKey = KeyCode.Mouse0;
+    [SerializeField] private KeyCode reloadKey = KeyCode.R;
     [SerializeField] private float fireForce;
     private bool readyToFire;
     private bool isReload;
@@ -31,11 +32,20 @@ public class Gun : MonoBehaviour
 
     private void Update()
     {
+        // 총알 발사
         if (Input.GetKey(fireKey) && readyToFire && totalBullet > 0)
         {
             Fire();
         }  
-        
+
+        // 수동 재장전
+        if(Input.GetKeyDown(reloadKey) && totalBullet < MaxBullet && !isReload)
+        {
+            isReload = true;
+            Invoke(nameof(Reload), reloadCooldown);
+        }
+
+        // 자동 재장전
         if(totalBullet <=0 && !isReload)
         {
             isReload = true;
@@ -81,4 +91,15 @@ public class Gun : MonoBehaviour
         isReload = false;
         totalBullet = MaxBullet;
     }
+
+    public int ToTalBullet
+    {
+        get { return totalBullet;}
+    }
+
+    public bool ISReload
+    {
+        get { return isReload; }
+    }
+
 }
