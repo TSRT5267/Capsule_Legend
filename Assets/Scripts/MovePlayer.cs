@@ -1,13 +1,20 @@
 using NUnit.Framework;
+using Photon.Pun;
 using System.Collections;
 using UnityEngine;
 
-public class MovePlayer : MonoBehaviour
+
+public class MovePlayer : MonoBehaviourPunCallbacks, IPunObservable
 {
+    [Header("Network")]
+    public PhotonView Pv;
+    public Vector3 curPos;
+
     [Header("ReFerences")]  
     [SerializeField] private State state;   // 상태
-    [SerializeField] private Climbing climbingScript;
+    [SerializeField] private Climbing climbingScript;   
     public int hp;
+    
 
     [Header("Input")] // 키설정
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;               // 점프키 할당
@@ -85,6 +92,7 @@ public class MovePlayer : MonoBehaviour
 
     private void Start()
     {
+
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;       // 물리로 인해 회전되지 않게 
 
@@ -95,24 +103,31 @@ public class MovePlayer : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Move(); //기본 이동
+        if(photonView.IsMine)
+        {
+            Move(); //기본 이동 
+        }
+            
     }
 
     private void Update()
     {
-        // 바닥 확인
-        isGround = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+        if (photonView.IsMine)
+        {
+            // 바닥 확인
+            isGround = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
-        MyInput();          // 플레이어 입력
-        SpeedControl();     // XZ 최고속도 조절
-        StateHandler();     // 상태 변경
+            MyInput();          // 플레이어 입력
+            SpeedControl();     // XZ 최고속도 조절
+            StateHandler();     // 상태 변경
 
-        // 바닥 저항
-        if (isGround && !isGrapple)
-            rb.linearDamping = groundDrag;
-        else
-            rb.linearDamping = 0;
-
+            // 바닥 저항
+            if (isGround && !isGrapple)
+                rb.linearDamping = groundDrag;
+            else
+                rb.linearDamping = 0;
+        }
+        
     }
 
     
@@ -401,6 +416,21 @@ public class MovePlayer : MonoBehaviour
                                                                                                 
         return velocityXZ+velocityY;
     }
+
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if(stream.IsWriting)
+        {
+            stream.SendNext(transform.position);          
+        }
+        else
+        {
+            curPos = (Vector3)stream.ReceiveNext();
+        }
+    }
+
+
 
     //------------------getter , setter----------------------------
 

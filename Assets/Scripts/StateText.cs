@@ -3,12 +3,12 @@ using UnityEngine.UI;
 
 public class StateText : MonoBehaviour
 {
-    GameObject player;
+    public GameObject player;
     Text text;
 
     void Start()
     {
-        player = GameObject.Find("Player");
+        
         text = GetComponent<Text>();
     }
 

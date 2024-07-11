@@ -5,13 +5,23 @@ public class Bullet : MonoBehaviour
     [Header("Bullet")]
     [SerializeField] private float lifeTime = 3f;
 
-    private void Awake()
+    
+
+    private void Update()
     {
-        Destroy(gameObject, lifeTime);
+        //Destroy(gameObject, lifeTime);
+
+        Invoke(nameof(UnActive), lifeTime);
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        Destroy(gameObject, lifeTime);
+        //Destroy(gameObject);
+        UnActive();
+    }
+
+    private void UnActive()
+    {
+        gameObject.SetActive(false);
     }
 }

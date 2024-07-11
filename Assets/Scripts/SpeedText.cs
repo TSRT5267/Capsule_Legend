@@ -3,12 +3,11 @@ using UnityEngine.UI;
 
 public class SpeedText : MonoBehaviour
 {
-    GameObject player;
+    public GameObject player;
     Text text;
 
     void Start()
-    {
-        player = GameObject.Find("Player");
+    {       
         text = GetComponent<Text>();
     }
 

@@ -58,10 +58,17 @@ public class Gun : MonoBehaviour
     {
         readyToFire = false;
 
+        //오브젝트 풀링을 사용해 총알발사
+        GameObject prefabToSpawn = PoolManager.instance.ActivateObj(0);
+        prefabToSpawn.transform.position = gunTip.position;
+        prefabToSpawn.transform.rotation = gunTip.rotation;
+        Rigidbody prefabToSpawnRB = prefabToSpawn.GetComponent<Rigidbody>();
+        prefabToSpawnRB.linearVelocity = Vector3.zero;
+
         //총알 설정
-        GameObject projectile = Instantiate(bulletPrefab, gunTip.position, gunTip.rotation);
-        Rigidbody projectileRb = projectile.GetComponent<Rigidbody>();
-        
+        //GameObject projectile = Instantiate(bulletPrefab, gunTip.position, gunTip.rotation);
+        // projectileRb = projectile.GetComponent<Rigidbody>();
+
         // 발사 방향 계산
         Vector3 forceDir = Cam.transform.forward;
         RaycastHit hit;
@@ -72,9 +79,9 @@ public class Gun : MonoBehaviour
 
         // 발사 백터
         Vector3 forceToAdd = forceDir * fireForce;
-        
+
         // 백터 적용
-        projectileRb.AddForce(forceToAdd,ForceMode.Impulse);
+        prefabToSpawnRB.AddForce(forceToAdd,ForceMode.Impulse);
 
         totalBullet--; // 총 총알 갯수--
 
